@@ -35,6 +35,20 @@
             touch-action: none;
         }
 
+        /* ============================================ */
+        /* 🔒 СКРЫТИЕ ИНТЕРФЕЙСА ДО НАЧАЛА МИССИИ       */
+        /* ============================================ */
+        body.loading .ui-layer,
+        body.loading #gameCanvas,
+        body.loading .sound-toggle,
+        body.loading .touch-controls,
+        body.loading .height-buttons {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        /* ============================================ */
+
         #gameCanvas {
             position: fixed;
             top: 0;
@@ -1318,7 +1332,7 @@
         }
     </style>
 </head>
-<body>
+<body class="loading">
 
 <canvas id="gameCanvas"></canvas>
 
@@ -1936,7 +1950,7 @@ const game = {
     isThermalButtonPressed: false,
     isUpButtonPressed: false,
     isDownButtonPressed: false,
-    scene3DReady: false, // Флаг: 3D сцена инициализирована
+    scene3DReady: false,
     wind: {
         x: 0, z: 0, strength: 0, direction: 0,
         gustTimer: 0, nextGust: 3000, maxStrength: 0.8
@@ -1975,7 +1989,6 @@ function init3DScene() {
         
         scene.fog = new THREE.FogExp2(0xe6c7a1, 0.0003);
         
-        // Ландшафт
         const texCanvas = document.createElement('canvas');
         texCanvas.width = 1024;
         texCanvas.height = 1024;
@@ -2053,7 +2066,6 @@ function init3DScene() {
         terrain.position.set(0, -10, 0);
         scene.add(terrain);
         
-        // Освещение
         scene.add(new THREE.AmbientLight(0xfff0e0, 0.6));
         scene.add(new THREE.HemisphereLight(0xffcc88, 0x442211, 0.4));
         
@@ -2076,7 +2088,6 @@ function init3DScene() {
         fillLight.position.set(-500, 200, -300);
         scene.add(fillLight);
         
-        // Деревья (250 шт)
         const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d4f1e, roughness: 0.8 });
         const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x3a5a2a, roughness: 0.8 });
         const leafMat3 = new THREE.MeshStandardMaterial({ color: 0x224015, roughness: 0.8 });
@@ -2135,7 +2146,6 @@ function init3DScene() {
             scene.add(createTree(x, z, 0.5 + Math.random() * 0.5));
         }
         
-        // Дома
         function createHouse(x, z, rot = 0) {
             const group = new THREE.Group();
             const y = getTerrainHeight(x, z);
@@ -2169,7 +2179,6 @@ function init3DScene() {
         scene.add(createHouse(-400, -400, 0.6));
         scene.add(createHouse(700, -300, 0.3));
         
-        // Вражеский БПЛА
         enemyDrone = new THREE.Group();
         
         const droneBody = new THREE.Mesh(
@@ -2255,9 +2264,6 @@ let isMouseDown = false;
 let prevMousePos = { x: 0, y: 0 };
 const keys = {};
 
-// ============================================
-// ОБРАБОТЧИКИ СОБЫТИЙ
-// ============================================
 document.addEventListener('mousedown', (e) => {
     if (!game.running) return;
     if (e.button === 0) {
@@ -2347,7 +2353,6 @@ document.addEventListener('keyup', (e) => {
     if (key === 'f') game.isLockButtonPressed = false;
 });
 
-// Touch события
 canvas.addEventListener('touchstart', (e) => {
     if (!game.running) return;
     e.preventDefault();
@@ -2385,7 +2390,6 @@ canvas.addEventListener('touchend', (e) => {
     game.lastPinchDist = null;
 }, { passive: false });
 
-// Виртуальный джойстик
 const joystickContainer = document.getElementById('joystickContainer');
 const joystickStick = document.getElementById('joystickStick');
 let joystickTouchId = null;
@@ -2440,7 +2444,6 @@ function updateJoystick(touch) {
     joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
 }
 
-// Сенсорные кнопки
 const btnThermal = document.getElementById('btnThermal');
 btnThermal.addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -2509,9 +2512,6 @@ btnUp.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagatio
 btnDown.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); game.isDownButtonPressed = true; }, { passive: false });
 btnDown.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); game.isDownButtonPressed = false; }, { passive: false });
 
-// ============================================
-// ФУНКЦИИ ВЕТРА
-// ============================================
 function updateWind(delta) {
     game.wind.gustTimer += delta * 1000;
     
@@ -2542,9 +2542,6 @@ function updateWindIndicator() {
     else DOM.windStrength.style.color = 'var(--accent-green)';
 }
 
-// ============================================
-// ФУНКЦИИ ИГРЫ
-// ============================================
 function activateDetector() {
     game.detectorReady = false;
     game.detectorCooldown = 180;
@@ -2564,9 +2561,6 @@ function transmitCoordinates() {
     }, 2000);
 }
 
-// ============================================
-// МИНИКАРТА
-// ============================================
 const minimapCanvas = document.getElementById('minimapCanvas');
 const minimapCtx = minimapCanvas.getContext('2d');
 let lastMinimapUpdate = 0;
@@ -2610,9 +2604,6 @@ function drawMinimap() {
     }
 }
 
-// ============================================
-// RAYCASTER
-// ============================================
 const raycaster = new THREE.Raycaster();
 const screenCenter = new THREE.Vector2(0, 0);
 
@@ -2637,9 +2628,6 @@ function updateEnemyIndicator() {
     }
 }
 
-// ============================================
-// ОСНОВНОЙ ЦИКЛ
-// ============================================
 let lastLockSoundTime = 0;
 
 function update() {
@@ -2804,9 +2792,6 @@ function update() {
     updateEnemyIndicator();
 }
 
-// ============================================
-// ОБНОВЛЕНИЕ UI
-// ============================================
 function updateUI(inView) {
     const minutes = Math.floor(Math.max(0, game.time) / 60);
     const seconds = Math.floor(Math.max(0, game.time) % 60);
@@ -2896,9 +2881,6 @@ function getCompassDir(deg) {
     return dirs[Math.floor(((deg + 22.5) % 360) / 45)];
 }
 
-// ============================================
-// ПОБЕДА / ПОРАЖЕНИЕ
-// ============================================
 function winGame() {
     if (!game.running) return;
     
@@ -2930,9 +2912,12 @@ function winGame() {
 }
 
 // ============================================
-// 🚀 СТАРТ МИССИИ - ГЛАВНОЕ ИЗМЕНЕНИЕ!
+// 🚀 СТАРТ МИССИИ
 // ============================================
 function startMission() {
+    // 🔓 УБИРАЕМ КЛАСС loading — показываем интерфейс
+    document.body.classList.remove('loading');
+    
     // 1. ИНИЦИАЛИЗИРУЕМ 3D СЦЕНУ ТОЛЬКО СЕЙЧАС (по клику)
     init3DScene();
     
@@ -2988,9 +2973,6 @@ document.getElementById('startBtn').addEventListener('click', startMission);
 document.getElementById('restartBtn1').addEventListener('click', () => location.reload());
 document.getElementById('restartBtn2').addEventListener('click', () => location.reload());
 
-// ============================================
-// АНИМАЦИОННЫЙ ЦИКЛ
-// ============================================
 function animate() {
     requestAnimationFrame(animate);
     update();
